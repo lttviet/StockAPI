@@ -9,6 +9,6 @@ namespace StockBE
     }
 
     public string symbol { get; set; }
-    public string type { get; set; }
+    public string type { get; }
   }
 }
