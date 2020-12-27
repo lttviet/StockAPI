@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 using StockBE.Services;
+using StockBE.DataAccess;
 
 namespace StockBE
 {
@@ -26,8 +27,6 @@ namespace StockBE
         });
       });
 
-      services.AddHostedService<QuoteService>();
-      services.AddControllers();
       services.AddSwaggerGen(c =>
       {
         c.SwaggerDoc(
@@ -35,6 +34,11 @@ namespace StockBE
           new OpenApiInfo { Title = "Broker API", Version = "v1" }
         );
       });
+
+      services.AddControllers();
+      services.AddSingleton<BrokerDataAccess>();
+      // services.AddHostedService<BrokerService>();
+      // services.AddHostedService<QuoteService>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
