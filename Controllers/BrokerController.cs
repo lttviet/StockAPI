@@ -28,12 +28,5 @@ namespace StockBE.Controllers
       }
       return cash;
     }
-
-    [HttpPut("portfolio/{id}/cash")]
-    public async Task<IActionResult> UpdateCash(string id, Cash cash)
-    {
-      await this.brokerDataAccess.UpdateCashAsync(id, cash.cash);
-      return NoContent();
-    }
   }
 }
