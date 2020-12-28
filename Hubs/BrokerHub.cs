@@ -37,5 +37,31 @@ namespace StockBE.Hubs
         );
       }
     }
+
+    public async Task BuyStock(string portfolioId, string symbol, double price, int quantity)
+    {
+      bool resultCode = await db.BuyStock(portfolioId, symbol, price, quantity);
+      if (resultCode)
+      {
+        await Clients.Caller.SendAsync("ReceiveMessage", "Successful purchase.");
+      }
+      else
+      {
+        await Clients.Caller.SendAsync("ReceiveMessage", "Failed purchase.");
+      }
+    }
+
+    public async Task SellStock(string portfolioId, string symbol, double price, int quantity)
+    {
+      bool resultCode = await db.SellStock(portfolioId, symbol, price, quantity);
+      if (resultCode)
+      {
+        await Clients.Caller.SendAsync("ReceiveMessage", "Successful sale.");
+      }
+      else
+      {
+        await Clients.Caller.SendAsync("ReceiveMessage", "Failed sale.");
+      }
+    }
   }
 }
