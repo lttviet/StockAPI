@@ -5,6 +5,7 @@ namespace StockBE
   [FirestoreData]
   public class Stock
   {
+    // TODO clean up data, change to decimal
     [FirestoreProperty]
     public double cost { get; set; }
 
