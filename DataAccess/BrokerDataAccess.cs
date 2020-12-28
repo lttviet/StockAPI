@@ -16,7 +16,7 @@ namespace StockBE.DataAccess
     public BrokerDataAccess()
     {
       Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialFile);
-      db = FirestoreDb.Create(projectID); 
+      db = FirestoreDb.Create(projectID);
     }
 
     public async Task<double?> GetCashAsync(string portfolioId)
@@ -36,36 +36,46 @@ namespace StockBE.DataAccess
       await document.UpdateAsync("cash", newValue);
     }
 
-    public async Task SubscribeCashDocAsync(string portfolioId)
+    public async Task<List<Stock>> GetStocks(string portfolioId)
+    {
+      CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
+      QuerySnapshot querySnapshot = await collection.GetSnapshotAsync();
+
+      List<Stock> stocks = new List<Stock>();
+      foreach (DocumentSnapshot queryResult in querySnapshot.Documents)
+      {
+        Stock stock = queryResult.ConvertTo<Stock>();
+        stocks.Add(stock);
+      }
+      return stocks;
+    }
+
+    public async Task SubscribeCashDocumentAsync(
+      string portfolioId,
+      Action<DocumentSnapshot> callback,
+      CancellationToken stoppingToken = default
+    )
     {
       DocumentReference document = db.Document($"portfolio/{portfolioId}");
       DocumentSnapshot snapshot = await document.GetSnapshotAsync();
       if (snapshot.Exists)
       {
-        FirestoreChangeListener listener = document.Listen(snapshot =>
-        {
-          Console.WriteLine($"Cash value: {snapshot.GetValue<double?>("cash")}");
-        });
+        document.Listen(callback, stoppingToken);
       }
     }
 
-    public async Task SubscribeStockCollectionAsync(string portfolioId)
+    public async Task SubscribeStockCollectionAsync(
+      string portfolioId,
+      Action<QuerySnapshot> callback,
+      CancellationToken stoppingToken = default
+    )
     {
       DocumentReference document = db.Document($"portfolio/{portfolioId}");
       DocumentSnapshot snapshot = await document.GetSnapshotAsync();
       if (snapshot.Exists)
       {
         CollectionReference collection = document.Collection("stocks");
-
-        collection.Listen(snapshot =>
-        {
-          List<Stock> stocks = new List<Stock>();
-          foreach (DocumentSnapshot queryResult in snapshot.Documents)
-          {
-            Stock stock = queryResult.ConvertTo<Stock>();
-            stocks.Add(stock);
-          }
-        });    
+        collection.Listen(callback, stoppingToken);
       }
     }
   }

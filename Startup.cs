@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
+using StockBE.Hubs;
 using StockBE.Services;
 using StockBE.DataAccess;
 
@@ -23,7 +24,8 @@ namespace StockBE
         {
           builder.WithOrigins("http://localhost:4200")
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
         });
       });
 
@@ -37,8 +39,9 @@ namespace StockBE
 
       services.AddControllers();
       services.AddSingleton<BrokerDataAccess>();
-      // services.AddHostedService<BrokerService>();
+      services.AddHostedService<BrokerService>();
       // services.AddHostedService<QuoteService>();
+      services.AddSignalR();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -61,6 +64,7 @@ namespace StockBE
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllers();
+        endpoints.MapHub<BrokerHub>("/brokerhub");
       });
     }
   }
