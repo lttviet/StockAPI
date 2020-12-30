@@ -38,6 +38,7 @@ namespace StockBE.Hubs
       }
     }
 
+    // TODO move to controller
     public async Task BuyStock(string portfolioId, string symbol, double price, int quantity)
     {
       bool resultCode = await db.BuyStock(portfolioId, symbol, price, quantity);
@@ -51,6 +52,7 @@ namespace StockBE.Hubs
       }
     }
 
+    // TODO move to controller
     public async Task SellStock(string portfolioId, string symbol, double price, int quantity)
     {
       bool resultCode = await db.SellStock(portfolioId, symbol, price, quantity);
