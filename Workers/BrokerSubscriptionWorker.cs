@@ -12,12 +12,12 @@ using StockBE.DataAccess;
 
 namespace StockBE.Services
 {
-  public class BrokerService : BackgroundService
+  public class BrokerSubscriptionWorker : BackgroundService
   {
     private readonly BrokerDataAccess db;
     private readonly IHubContext<BrokerHub> hubContext;
 
-    public BrokerService(BrokerDataAccess db, IHubContext<BrokerHub> hubContext)
+    public BrokerSubscriptionWorker(BrokerDataAccess db, IHubContext<BrokerHub> hubContext)
     {
       this.db = db;
       this.hubContext = hubContext;

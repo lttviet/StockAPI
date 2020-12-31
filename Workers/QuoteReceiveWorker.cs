@@ -11,11 +11,11 @@ using StockBE.DataAccess;
 
 namespace StockBE.Services
 {
-  public class QuoteService : BackgroundService
+  public class QuoteReceiveWorker : BackgroundService
   {
     private readonly QuoteClient quoteClient;
 
-    public QuoteService(QuoteClient quoteClient)
+    public QuoteReceiveWorker(QuoteClient quoteClient)
     {
       this.quoteClient = quoteClient;
     }
