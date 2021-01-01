@@ -16,6 +16,7 @@ namespace StockBE.Services
   {
     private readonly BrokerDataAccess db;
     private readonly IHubContext<BrokerHub> hubContext;
+    private readonly string portfolioId = "1";
 
     public BrokerSubscriptionWorker(BrokerDataAccess db, IHubContext<BrokerHub> hubContext)
     {
@@ -29,13 +30,13 @@ namespace StockBE.Services
       // TODO: look into queued background task
 
       await db.SubscribeCashDocumentAsync(
-        "1",
+        portfolioId,
         snapshot => hubContext.Clients.All.SendAsync("ReceiveCash", snapshot.GetValue<double?>("cash")),
         stoppingToken
       );
 
       await db.SubscribeStockCollectionAsync(
-        "1",
+        portfolioId,
         snapshot =>
         {
           List<Stock> stocks = new List<Stock>();

@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,11 +15,13 @@ namespace StockBE.DataAccess
     private readonly string endpoint = "ws://echo.websocket.org";
     private readonly ClientWebSocket socket;
     private readonly CancellationTokenSource source;
+    private readonly ConcurrentDictionary<string, bool> symbols;
 
     public QuoteClient()
     {
       socket = new ClientWebSocket();
       source = new CancellationTokenSource();
+      symbols = new ConcurrentDictionary<string, bool>();
     }
 
     public async Task ConnectAsync()
@@ -36,25 +39,31 @@ namespace StockBE.DataAccess
 
     public async Task SubscribeAsync(string symbol)
     {
-      Subscription sub = new Subscription("subscribe", symbol.ToUpper());
-      await SendSubscriptionAsync(sub);
+      if (symbols.TryAdd(symbol, true))
+      {
+        Subscription sub = new Subscription("subscribe", symbol.ToUpper());
+        await SendSubscriptionAsync(sub);
+      }
     }
 
     public async Task UnsubscribeAsync(string symbol)
     {
-      Subscription sub = new Subscription("unsubscribe", symbol.ToUpper());
-      await SendSubscriptionAsync(sub);
+      if (symbols.TryRemove(symbol, out _))
+      {
+        Subscription sub = new Subscription("unsubscribe", symbol.ToUpper());
+        await SendSubscriptionAsync(sub);
+      }
     }
 
-    public async Task ReceiveAsync(Action<string> callback)
+    public async Task ReceiveAsync(Action<string> callback, CancellationToken stoppingToken)
     {
       var buffer = new ArraySegment<byte>(new byte[1024]);
       WebSocketReceiveResult result;
-      while (socket.State == WebSocketState.Open && !source.Token.IsCancellationRequested)
+      while (socket.State == WebSocketState.Open && !stoppingToken.IsCancellationRequested)
       {
         do
         {
-          result = await socket.ReceiveAsync(buffer, source.Token);
+          result = await socket.ReceiveAsync(buffer, stoppingToken);
         }
         while (!result.EndOfMessage);
 
