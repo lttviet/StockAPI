@@ -34,5 +34,10 @@ namespace StockBE
     public string symbol { get; set; }
     public decimal price { get; set; }
     public long timestamp { get; set; }
+
+    public override string ToString()
+    {
+      return $"Quote: ${symbol} for ${price} at {timestamp}";
+    }
   }
 }
