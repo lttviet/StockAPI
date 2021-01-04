@@ -50,9 +50,18 @@ namespace StockBE.DataAccess
       return stocks;
     }
 
-    public async Task<bool> BuyStock(string portfolioId, string symbol, double price, int quantity)
+    public async Task<bool> BuyStock(string portfolioId, Order order)
     {
-      double totalCost = price * quantity;
+      double price;
+      if (!Double.TryParse(order.price, out price))
+      {
+        throw new ArgumentException($"{order.price} isn't a decimal number");
+      }
+
+      string symbol = order.symbol;
+      int quantity = order.quantity;
+
+      double totalCost = price * order.quantity;
       double? cash = await GetCashAsync(portfolioId);
       if (cash == null || cash < totalCost)
       {
@@ -110,8 +119,17 @@ namespace StockBE.DataAccess
       }
     }
 
-    public async Task<bool> SellStock(string portfolioId, string symbol, double price, int quantity)
+    public async Task<bool> SellStock(string portfolioId, Order order)
     {
+      double price;
+      if (!Double.TryParse(order.price, out price))
+      {
+        throw new ArgumentException($"{order.price} isn't a decimal number");
+      }
+
+      string symbol = order.symbol;
+      int quantity = order.quantity;
+
       CollectionReference stocksRef = db.Collection($"portfolio/{portfolioId}/stocks");
       Query query = stocksRef.WhereEqualTo("symbol", symbol).Limit(1);
       QuerySnapshot querySnapshot = await query.GetSnapshotAsync();

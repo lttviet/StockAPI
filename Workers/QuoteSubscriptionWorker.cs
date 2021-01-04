@@ -35,8 +35,8 @@ namespace StockBE.Services
       while (!stoppingToken.IsCancellationRequested)
       {
         await quoteClient.ConnectAsync();
-        await SubscribeInitialStocks();
-        await quoteClient.ReceiveAsync(Test, stoppingToken);
+        // await SubscribeInitialStocks();
+        await quoteClient.ReceiveAsync(SendQuoteToAll, stoppingToken);
       }
     }
 
@@ -47,11 +47,9 @@ namespace StockBE.Services
       {
         await quoteClient.SubscribeAsync(stock.symbol);
       }
-      await quoteClient.SubscribeAsync("SPY");
-      await quoteClient.SubscribeAsync("TSLA");
     }
 
-    private void Test(string s)
+    private void SendQuoteToAll(string s)
     {
       QuoteResponse response = JsonSerializer.Deserialize<QuoteResponse>(s);
       Quote quote = response.ToQuote();

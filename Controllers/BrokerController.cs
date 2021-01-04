@@ -34,11 +34,7 @@ namespace StockBE.Controllers
     [HttpPost("portfolio/{id}/stocks/buy")]
     public async Task<ActionResult> BuyStock(string id, Order order)
     {
-      // TODO refactor to use Order in brokerDB
-      // bool resultCode = await brokerDB.BuyStock(id, order.symbol, order.price, order.quantity);
-      bool resultCode = true;
-      await Task.Delay(TimeSpan.FromSeconds(1));
-      if (resultCode)
+      if (await brokerDB.BuyStock(id, order))
       {
         return NoContent();
       }
@@ -48,10 +44,7 @@ namespace StockBE.Controllers
     [HttpPost("portfolio/{id}/stocks/sell")]
     public async Task<ActionResult> SellStock(string id, Order order)
     {
-      // bool resultCode = await brokerDB.SellStock(portfolioId, order.symbol, order.price, order.quantity);
-      bool resultCode = true;
-      await Task.Delay(TimeSpan.FromSeconds(1));
-      if (resultCode)
+      if (await brokerDB.SellStock(id, order))
       {
         return NoContent();
       }

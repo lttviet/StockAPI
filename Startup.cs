@@ -66,6 +66,7 @@ namespace StockBE
       {
         endpoints.MapControllers();
         endpoints.MapHub<BrokerHub>("/brokerhub");
+        endpoints.MapHub<QuoteHub>("/quotehub");
       });
     }
   }
