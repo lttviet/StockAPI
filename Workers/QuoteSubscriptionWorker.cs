@@ -35,7 +35,7 @@ namespace StockBE.Services
       while (!stoppingToken.IsCancellationRequested)
       {
         await quoteClient.ConnectAsync();
-        // await SubscribeInitialStocks();
+        await SubscribeInitialStocks();
         await quoteClient.ReceiveAsync(SendQuoteToAll, stoppingToken);
       }
     }
@@ -56,7 +56,6 @@ namespace StockBE.Services
       if (quote != null)
       {
         quoteHub.Clients.All.SendAsync("ReceiveQuote", quote);
-        Console.WriteLine(quote);
       }
     }
   }
