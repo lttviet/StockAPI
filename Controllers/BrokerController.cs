@@ -20,17 +20,6 @@ namespace StockBE.Controllers
       this.quoteClient = quoteClient;
     }
 
-    [HttpGet("portfolio/{id}/cash")]
-    public async Task<ActionResult<double>> GetCash(string id)
-    {
-      double? cash = await this.brokerDB.GetCashAsync(id);
-      if (cash is null)
-      {
-        return NotFound();
-      }
-      return cash;
-    }
-
     [HttpPost("portfolio/{id}/stocks/buy")]
     public async Task<ActionResult> BuyStock(string id, Order order)
     {
