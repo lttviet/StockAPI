@@ -13,7 +13,8 @@ namespace StockBE.DataAccess
 {
   public class QuoteClient
   {
-    private readonly string wsEndpoint = "ws://echo.websocket.org";
+    private readonly string wsEndpoint = "";
+    private readonly string apiEndPoint = "";
     private readonly ClientWebSocket socket;
     private readonly CancellationTokenSource source;
     private readonly ConcurrentDictionary<string, bool> symbols;
@@ -23,6 +24,19 @@ namespace StockBE.DataAccess
       socket = new ClientWebSocket();
       source = new CancellationTokenSource();
       symbols = new ConcurrentDictionary<string, bool>();
+    }
+
+    public async Task<long> GetLastClosePrice(string symbol)
+    {
+      using (var client = new HttpClient())
+      {
+        string url = $"{apiEndPoint}&symbol={symbol}";
+        using (var streamTask = client.GetStreamAsync(url))
+        {
+          var response = await JsonSerializer.DeserializeAsync<QuoteAPIResponse>(await streamTask);
+          return (long)Decimal.Round(response.closePrice * 100);
+        }
+      }
     }
 
     public async Task ConnectAsync()

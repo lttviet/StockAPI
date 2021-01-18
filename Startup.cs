@@ -42,6 +42,7 @@ namespace StockBE
       services.AddSingleton<QuoteClient>();
       services.AddHostedService<BrokerSubscriptionWorker>();
       services.AddHostedService<QuoteSubscriptionWorker>();
+      services.AddHostedService<BrokerUpdateWorker>();
       services.AddSignalR();
     }
 

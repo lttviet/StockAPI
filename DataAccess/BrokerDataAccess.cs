@@ -51,6 +51,7 @@ namespace StockBE.DataAccess
       await snapshot.Reference.UpdateAsync("value", newValue);
     }
 
+    // TODO use cloud functions
     public void CreateAutoUpdatePortfolioValueListener(string portfolioId, CancellationToken stoppingToken)
     {
       CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
@@ -73,8 +74,7 @@ namespace StockBE.DataAccess
 
     public async Task<List<Stock>> GetStocks(string portfolioId)
     {
-      CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
-      QuerySnapshot querySnapshot = await collection.GetSnapshotAsync();
+      QuerySnapshot querySnapshot = await GetAllStockQuerySnapshotAsync(portfolioId);
 
       List<Stock> stocks = new List<Stock>();
       foreach (DocumentSnapshot queryResult in querySnapshot.Documents)
@@ -230,11 +230,10 @@ namespace StockBE.DataAccess
       CancellationToken stoppingToken = default
     )
     {
-      DocumentReference document = db.Document($"portfolio/{portfolioId}");
-      DocumentSnapshot snapshot = await document.GetSnapshotAsync();
+      DocumentSnapshot snapshot = await GetPorfolioSnapshotAsync(portfolioId);
       if (snapshot.Exists)
       {
-        document.Listen(callback, stoppingToken);
+        snapshot.Reference.Listen(callback, stoppingToken);
       }
     }
 
@@ -244,12 +243,17 @@ namespace StockBE.DataAccess
       CancellationToken stoppingToken = default
     )
     {
-      CollectionReference stocksRef = db.Collection($"portfolio/{portfolioId}/stocks");
-      QuerySnapshot querySnapshot = await stocksRef.GetSnapshotAsync();
+      QuerySnapshot querySnapshot = await GetAllStockQuerySnapshotAsync(portfolioId);
       if (querySnapshot.Count > 0)
       {
-        stocksRef.Listen(callback, stoppingToken);
+        querySnapshot.Query.Listen(callback, stoppingToken);
       }
+    }
+
+    public async Task<QuerySnapshot> GetAllStockQuerySnapshotAsync(string portfolioId)
+    {
+      CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
+      return await collection.GetSnapshotAsync();
     }
 
     private async Task<DocumentSnapshot> GetPorfolioSnapshotAsync(string portfolioId)

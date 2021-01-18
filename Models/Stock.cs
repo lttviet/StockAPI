@@ -14,9 +14,12 @@ namespace StockBE
     [FirestoreProperty]
     public string symbol { get; set; }
 
+    [FirestoreProperty]
+    public long closePrice { get; set; }
+
     public override string ToString()
     {
-      return $"Symbol: {this.symbol} - Quantity: {this.quantity} - Cost: {this.cost}";
+      return $"Symbol: {this.symbol} - Quantity: {this.quantity} - Cost: {this.cost} - Close price: {this.closePrice}";
     }
   }
 }

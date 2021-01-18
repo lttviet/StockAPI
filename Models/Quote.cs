@@ -32,6 +32,12 @@ namespace StockBE
     public int v { get; set; }
   }
 
+  public class QuoteAPIResponse
+  {
+    [JsonPropertyName("pc")]
+    public decimal closePrice { get; set; }
+  }
+
   public class Quote
   {
     public string symbol { get; set; }

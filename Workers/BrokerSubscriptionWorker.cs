@@ -26,6 +26,7 @@ namespace StockBE.Services
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+      // Forward cash + portfolio value to clients whenever firestore changes
       await db.SubscribePortfolioDocumentAsync(
         portfolioId,
         snapshot =>
@@ -36,6 +37,7 @@ namespace StockBE.Services
         stoppingToken
       );
 
+      // Forward stocks to clients whenever firestore changes
       await db.SubscribeStockCollectionAsync(
         portfolioId,
         snapshot =>
@@ -53,8 +55,6 @@ namespace StockBE.Services
         },
         stoppingToken
       );
-
-      db.CreateAutoUpdatePortfolioValueListener(portfolioId, stoppingToken);
     }
   }
 }
