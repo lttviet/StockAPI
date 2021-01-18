@@ -1,8 +1,11 @@
+using System;
+using System.Text.Json.Serialization;
+
 namespace StockBE
 {
-  public class QuoteResponse
+  public class QuoteSocketResponse
   {
-    public QuoteData[] data { get; set; }
+    public QuoteSocketData[] data { get; set; }
     public string type { get; set; }
 
     public Quote ToQuote()
@@ -11,7 +14,7 @@ namespace StockBE
       {
         return new Quote
         {
-          price = this.data[0].p,
+          price = (long)Decimal.Round(this.data[0].p * 100),
           symbol = this.data[0].s,
           timestamp = this.data[0].t
         };
@@ -20,7 +23,7 @@ namespace StockBE
     }
   }
 
-  public class QuoteData
+  public class QuoteSocketData
   {
     public string[] c { get; set; }
     public decimal p { get; set; }
@@ -32,7 +35,7 @@ namespace StockBE
   public class Quote
   {
     public string symbol { get; set; }
-    public decimal price { get; set; }
+    public long price { get; set; }
     public long timestamp { get; set; }
 
     public override string ToString()

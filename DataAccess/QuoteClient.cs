@@ -7,12 +7,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
+using System.Net.Http;
 
 namespace StockBE.DataAccess
 {
   public class QuoteClient
   {
-    private readonly string endpoint = "ws://echo.websocket.org";
+    private readonly string wsEndpoint = "ws://echo.websocket.org";
     private readonly ClientWebSocket socket;
     private readonly CancellationTokenSource source;
     private readonly ConcurrentDictionary<string, bool> symbols;
@@ -28,7 +29,7 @@ namespace StockBE.DataAccess
     {
       if (socket.State != WebSocketState.Open)
       {
-        await socket.ConnectAsync(new Uri(endpoint), source.Token);
+        await socket.ConnectAsync(new Uri(wsEndpoint), source.Token);
       }
     }
 
@@ -55,7 +56,7 @@ namespace StockBE.DataAccess
       }
     }
 
-    public async Task ReceiveAsync(Action<string> callback, CancellationToken stoppingToken)
+    public async Task ReceiveAsync(Action<Quote> callback, CancellationToken stoppingToken)
     {
       var buffer = new ArraySegment<byte>(new byte[1024]);
       WebSocketReceiveResult result;
@@ -68,7 +69,14 @@ namespace StockBE.DataAccess
         while (!result.EndOfMessage);
 
         if (result.MessageType == WebSocketMessageType.Close) break;
-        callback(Encoding.UTF8.GetString(buffer.Array, 0, result.Count));
+
+        string message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+        QuoteSocketResponse response = JsonSerializer.Deserialize<QuoteSocketResponse>(message);
+        Quote quote = response.ToQuote();
+        if (quote != null)
+        {
+          callback(quote);
+        }
       }
     }
 

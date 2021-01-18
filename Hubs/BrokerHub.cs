@@ -19,7 +19,7 @@ namespace StockBE.Hubs
 
     public async Task GetCash(string portfolioId)
     {
-      double? cash = await db.GetCashAsync(portfolioId);
+      long? cash = await db.GetCashAsync(portfolioId);
       if (cash != null)
       {
         await Clients.Caller.SendAsync("ReceiveCash", cash);

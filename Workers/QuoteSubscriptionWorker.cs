@@ -36,7 +36,12 @@ namespace StockBE.Services
       {
         await quoteClient.ConnectAsync();
         await SubscribeInitialStocks();
-        await quoteClient.ReceiveAsync(SendQuoteToAll, stoppingToken);
+        await quoteClient.ReceiveAsync(
+          quote =>
+          {
+            quoteHub.Clients.All.SendAsync("ReceiveQuote", quote);
+          }
+          , stoppingToken);
       }
     }
 
@@ -46,16 +51,6 @@ namespace StockBE.Services
       foreach (Stock stock in stocks)
       {
         await quoteClient.SubscribeAsync(stock.symbol);
-      }
-    }
-
-    private void SendQuoteToAll(string s)
-    {
-      QuoteResponse response = JsonSerializer.Deserialize<QuoteResponse>(s);
-      Quote quote = response.ToQuote();
-      if (quote != null)
-      {
-        quoteHub.Clients.All.SendAsync("ReceiveQuote", quote);
       }
     }
   }

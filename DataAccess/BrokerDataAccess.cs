@@ -19,21 +19,20 @@ namespace StockBE.DataAccess
       db = FirestoreDb.Create(projectID);
     }
 
-    public async Task<double?> GetCashAsync(string portfolioId)
+    public async Task<long?> GetCashAsync(string portfolioId)
     {
-      DocumentReference document = db.Document($"portfolio/{portfolioId}");
-      DocumentSnapshot snapshot = await document.GetSnapshotAsync();
+      DocumentSnapshot snapshot = await GetPorfolioSnapshotAsync(portfolioId);
       if (snapshot.Exists)
       {
-        return snapshot.GetValue<double?>("cash");
+        return snapshot.GetValue<long>("cash");
       }
       return null;
     }
 
-    public async Task UpdateCashAsync(string portfolioId, double newValue)
+    public async Task UpdateCashAsync(string portfolioId, long newValue)
     {
-      DocumentReference document = db.Document($"portfolio/{portfolioId}");
-      await document.UpdateAsync("cash", newValue);
+      DocumentSnapshot snapshot = await GetPorfolioSnapshotAsync(portfolioId);
+      await snapshot.Reference.UpdateAsync("cash", newValue);
     }
 
     public async Task<List<Stock>> GetStocks(string portfolioId)
@@ -52,50 +51,52 @@ namespace StockBE.DataAccess
 
     public async Task<bool> BuyStock(string portfolioId, Order order)
     {
-      double price;
-      if (!Double.TryParse(order.price, out price))
-      {
-        throw new ArgumentException($"{order.price} isn't a decimal number");
-      }
-
       string symbol = order.symbol;
-      int quantity = order.quantity;
-
-      double totalCost = price * order.quantity;
-      double? cash = await GetCashAsync(portfolioId);
-      if (cash == null || cash < totalCost)
-      {
-        Console.WriteLine($"Not enought cash. Cash: {cash} - Cost: {totalCost}");
-        return false;
-      }
+      int orderQuantity = order.quantity;
+      long orderPrice = order.price;
+      long cash = 0;
+      long orderCost = 0;
 
       try
       {
-        await db.RunTransactionAsync(async transaction =>
+        orderCost = checked(orderPrice * orderQuantity);
+
+        bool done = await db.RunTransactionAsync<bool>(async transaction =>
         {
           // Read
-          DocumentReference cashRef = db.Document($"portfolio/{portfolioId}");
-          DocumentSnapshot cashSnapshot = await transaction.GetSnapshotAsync(cashRef);
+          DocumentSnapshot portfolioSnapshot = await GetPorfolioSnapshotAsync(portfolioId);
+          bool found = portfolioSnapshot.TryGetValue<long>("cash", out cash);
 
-          CollectionReference stocksRef = cashRef.Collection("stocks");
-          Query query = stocksRef.WhereEqualTo("symbol", symbol).Limit(1);
+          if (!found || cash < orderCost)
+          {
+            Console.WriteLine($"Not enought cash. Cash: {cash} - Cost: {orderCost}");
+            return false;
+          }
+
+          CollectionReference stockCollection = portfolioSnapshot.Reference.Collection("stocks");
+          Query query = stockCollection.WhereEqualTo("symbol", symbol).Limit(1);
           QuerySnapshot querySnapshot = await transaction.GetSnapshotAsync(query);
 
-          // Update cash         
-          double newCash = cashSnapshot.GetValue<double>("cash") - totalCost;
-          transaction.Update(cashRef, "cash", newCash);
+          // Update cash
+          long newCash = cash - orderCost;
+          transaction.Update(portfolioSnapshot.Reference, "cash", newCash);
 
           // Update stocks
           if (querySnapshot.Count == 1)
           {
             DocumentSnapshot stockSnapshot = querySnapshot.Documents[0];
-            int newQuantity = stockSnapshot.GetValue<int>("quantity") + quantity;
-            double newCost = stockSnapshot.GetValue<double>("cost") + totalCost;
+
+            int currentQuantity = stockSnapshot.GetValue<int>("quantity");
+            int newQuantity = checked(currentQuantity + orderQuantity);
+
+            long currentCost = stockSnapshot.GetValue<long>("cost");
+            long newCost = checked(currentCost + orderCost);
+
             Dictionary<string, object> updates =
               new Dictionary<string, object>
               {
-                {"quantity", newQuantity},
-                {"cost", newCost}
+                {"quantity",  newQuantity},
+                {"cost",  newCost}
               };
             transaction.Update(stockSnapshot.Reference, updates);
           }
@@ -104,13 +105,16 @@ namespace StockBE.DataAccess
             Stock stock = new Stock
             {
               symbol = symbol,
-              quantity = quantity,
-              cost = totalCost
+              quantity = orderQuantity,
+              cost = orderCost
             };
-            transaction.Create(stocksRef.Document(), stock);
+            transaction.Create(stockCollection.Document(), stock);
           }
+
+          return true;
         });
-        return true;
+
+        return done;
       }
       catch (Exception ex)
       {
@@ -121,46 +125,49 @@ namespace StockBE.DataAccess
 
     public async Task<bool> SellStock(string portfolioId, Order order)
     {
-      double price;
-      if (!Double.TryParse(order.price, out price))
-      {
-        throw new ArgumentException($"{order.price} isn't a decimal number");
-      }
-
       string symbol = order.symbol;
-      int quantity = order.quantity;
+      int orderQuantity = order.quantity;
+      long orderPrice = order.price;
+      long orderCost = 0;
 
-      CollectionReference stocksRef = db.Collection($"portfolio/{portfolioId}/stocks");
-      Query query = stocksRef.WhereEqualTo("symbol", symbol).Limit(1);
-      QuerySnapshot querySnapshot = await query.GetSnapshotAsync();
-      if (querySnapshot.Count != 1)
-      {
-        Console.WriteLine("No stock to sell.");
-        return false;
-      }
-      else if (querySnapshot.Documents[0].GetValue<int>("quantity") < quantity)
-      {
-        Console.WriteLine("Not enought stocks to sell.");
-        return false;
-      }
-
-      double totalCost = price * quantity;
       try
       {
-        await db.RunTransactionAsync(async transaction =>
+        orderCost = checked(orderPrice * orderQuantity);
+
+        bool done = await db.RunTransactionAsync<bool>(async transaction =>
         {
           // Read
-          DocumentReference cashRef = db.Document($"portfolio/{portfolioId}");
-          DocumentSnapshot cashSnapshot = await transaction.GetSnapshotAsync(cashRef);
+          DocumentSnapshot portfolioSnapshot = await GetPorfolioSnapshotAsync(portfolioId);
+
+          CollectionReference stockCollection = portfolioSnapshot.Reference.Collection("stocks");
+          Query query = stockCollection.WhereEqualTo("symbol", symbol).Limit(1);
+          QuerySnapshot querySnapshot = await transaction.GetSnapshotAsync(query);
+
+          if (querySnapshot.Count != 1)
+          {
+            Console.WriteLine("No stock to sell.");
+            return false;
+          }
+          else if (querySnapshot.Documents[0].GetValue<int>("quantity") < orderQuantity)
+          {
+            Console.WriteLine("Not enought stocks to sell.");
+            return false;
+          }
 
           // Update cash
-          double newCash = cashSnapshot.GetValue<double>("cash") + totalCost;
-          transaction.Update(cashRef, "cash", newCash);
+          long currentCash = portfolioSnapshot.GetValue<long>("cash");
+          long newCash = checked(currentCash + orderCost);
+          transaction.Update(portfolioSnapshot.Reference, "cash", newCash);
 
           // Update stock
           DocumentSnapshot stockSnapshot = querySnapshot.Documents[0];
-          int newQuantity = stockSnapshot.GetValue<int>("quantity") - quantity;
-          double newCost = stockSnapshot.GetValue<double>("cost") - totalCost;
+
+          int currentQuantity = stockSnapshot.GetValue<int>("quantity");
+          int newQuantity = currentQuantity - orderQuantity;
+
+          long currentCost = stockSnapshot.GetValue<long>("cost");
+          long newCost = currentCost - orderCost;
+
           Dictionary<string, object> updates =
             new Dictionary<string, object>
             {
@@ -168,8 +175,11 @@ namespace StockBE.DataAccess
               {"cost", newCost}
             };
           transaction.Update(querySnapshot.Documents[0].Reference, updates);
+
+          return true;
         });
-        return true;
+
+        return done;
       }
       catch (Exception ex)
       {
@@ -204,6 +214,12 @@ namespace StockBE.DataAccess
       {
         stocksRef.Listen(callback, stoppingToken);
       }
+    }
+
+    private async Task<DocumentSnapshot> GetPorfolioSnapshotAsync(string portfolioId)
+    {
+      DocumentReference document = db.Document($"portfolio/{portfolioId}");
+      return await document.GetSnapshotAsync();
     }
   }
 }

@@ -8,8 +8,8 @@ namespace StockBE
     public string symbol { get; set; }
 
     [Required]
-    [RegularExpression(@"^\d+.\d{2}$", ErrorMessage = "Price must have 2 decimal places")]
-    public string price { get; set; }
+    [Range(1, long.MaxValue)]
+    public long price { get; set; }
 
     [Required]
     [Range(1, int.MaxValue)]

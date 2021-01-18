@@ -26,9 +26,6 @@ namespace StockBE.Services
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-      // For testing, subscribe to portfolio 1 document and stocks collection
-      // TODO: look into queued background task
-
       await db.SubscribeCashDocumentAsync(
         portfolioId,
         snapshot => hubContext.Clients.All.SendAsync("ReceiveCash", snapshot.GetValue<double?>("cash")),
