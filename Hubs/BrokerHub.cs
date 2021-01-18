@@ -26,6 +26,15 @@ namespace StockBE.Hubs
       }
     }
 
+    public async Task GetPortfolioValue(string portfolioId)
+    {
+      long? value = await db.GetPortfolioValueAsync(portfolioId);
+      if (value != null)
+      {
+        await Clients.Caller.SendAsync("ReceivePortfolioValue", value);
+      }
+    }
+
     public async Task GetStocks(string portfolioId)
     {
       List<Stock> stocks = await db.GetStocks(portfolioId);

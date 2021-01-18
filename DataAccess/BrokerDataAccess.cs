@@ -35,6 +35,16 @@ namespace StockBE.DataAccess
       await snapshot.Reference.UpdateAsync("cash", newValue);
     }
 
+    public async Task<long?> GetPortfolioValueAsync(string portfolioId)
+    {
+      DocumentSnapshot snapshot = await GetPorfolioSnapshotAsync(portfolioId);
+      if (snapshot.Exists)
+      {
+        return snapshot.GetValue<long>("value");
+      }
+      return null;
+    }
+
     public async Task<List<Stock>> GetStocks(string portfolioId)
     {
       CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
