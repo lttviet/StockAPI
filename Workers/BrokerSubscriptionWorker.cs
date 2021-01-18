@@ -26,9 +26,13 @@ namespace StockBE.Services
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-      await db.SubscribeCashDocumentAsync(
+      await db.SubscribePortfolioDocumentAsync(
         portfolioId,
-        snapshot => hubContext.Clients.All.SendAsync("ReceiveCash", snapshot.GetValue<double?>("cash")),
+        snapshot =>
+        {
+          hubContext.Clients.All.SendAsync("ReceiveCash", snapshot.GetValue<long>("cash"));
+          hubContext.Clients.All.SendAsync("ReceivePortfolioValue", snapshot.GetValue<long>("value"));
+        },
         stoppingToken
       );
 
@@ -49,6 +53,8 @@ namespace StockBE.Services
         },
         stoppingToken
       );
+
+      db.CreateAutoUpdatePortfolioValueListener(portfolioId, stoppingToken);
     }
   }
 }

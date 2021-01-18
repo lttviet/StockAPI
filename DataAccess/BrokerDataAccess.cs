@@ -45,6 +45,32 @@ namespace StockBE.DataAccess
       return null;
     }
 
+    public async Task UpdatePortfolioValueAsync(string portfolioId, long newValue)
+    {
+      DocumentSnapshot snapshot = await GetPorfolioSnapshotAsync(portfolioId);
+      await snapshot.Reference.UpdateAsync("value", newValue);
+    }
+
+    public void CreateAutoUpdatePortfolioValueListener(string portfolioId, CancellationToken stoppingToken)
+    {
+      CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
+      FirestoreChangeListener listener = collection.Listen(
+        async snapshot =>
+        {
+          long newValue = 0;
+          foreach (DocumentSnapshot document in snapshot.Documents)
+          {
+            if (document.Exists)
+            {
+              long cost = document.GetValue<long>("cost");
+              newValue = checked(newValue + cost);
+            }
+          }
+          await UpdatePortfolioValueAsync(portfolioId, newValue);
+        }
+      );
+    }
+
     public async Task<List<Stock>> GetStocks(string portfolioId)
     {
       CollectionReference collection = db.Collection($"portfolio/{portfolioId}/stocks");
@@ -198,7 +224,7 @@ namespace StockBE.DataAccess
       }
     }
 
-    public async Task SubscribeCashDocumentAsync(
+    public async Task SubscribePortfolioDocumentAsync(
       string portfolioId,
       Action<DocumentSnapshot> callback,
       CancellationToken stoppingToken = default
