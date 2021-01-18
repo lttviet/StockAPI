@@ -12,14 +12,14 @@ using StockBE.DataAccess;
 
 namespace StockBE.Services
 {
-  public class QuoteReceiveWorker : BackgroundService
+  public class QuoteSubscriptionWorker : BackgroundService
   {
     private readonly QuoteClient quoteClient;
     private readonly BrokerDataAccess brokerDB;
     private readonly IHubContext<QuoteHub> quoteHub;
     private readonly string portfolioId = "1";
 
-    public QuoteReceiveWorker(
+    public QuoteSubscriptionWorker(
       QuoteClient quoteClient,
       BrokerDataAccess brokerDB,
       IHubContext<QuoteHub> quoteHub
