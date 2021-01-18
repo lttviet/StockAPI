@@ -198,12 +198,11 @@ namespace StockBE.DataAccess
       CancellationToken stoppingToken = default
     )
     {
-      DocumentReference document = db.Document($"portfolio/{portfolioId}");
-      DocumentSnapshot snapshot = await document.GetSnapshotAsync();
-      if (snapshot.Exists)
+      CollectionReference stocksRef = db.Collection($"portfolio/{portfolioId}/stocks");
+      QuerySnapshot querySnapshot = await stocksRef.GetSnapshotAsync();
+      if (querySnapshot.Count > 0)
       {
-        CollectionReference collection = document.Collection("stocks");
-        collection.Listen(callback, stoppingToken);
+        stocksRef.Listen(callback, stoppingToken);
       }
     }
   }
