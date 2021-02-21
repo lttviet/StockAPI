@@ -13,11 +13,13 @@ namespace StockBE.Controllers
   {
     private readonly BrokerDataAccess brokerDB;
     private readonly QuoteClient quoteClient;
+    private readonly CandleClient candleClient;
 
-    public BrokerController(BrokerDataAccess brokerDB, QuoteClient quoteClient)
+    public BrokerController(BrokerDataAccess brokerDB, QuoteClient quoteClient, CandleClient candleClient)
     {
       this.brokerDB = brokerDB;
       this.quoteClient = quoteClient;
+      this.candleClient = candleClient;
     }
 
     [HttpPost("portfolio/{id}/stocks/buy")]
@@ -40,5 +42,10 @@ namespace StockBE.Controllers
       return StatusCode(500);
     }
 
+    [HttpGet("candle/{symbol}")]
+    public async Task<ActionResult<Candle>> GetCandle(string symbol)
+    {
+      return await candleClient.GetDailyChangeCandle(symbol.ToUpper());
+    }
   }
 }

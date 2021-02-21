@@ -40,6 +40,7 @@ namespace StockBE
       services.AddControllers();
       services.AddSingleton<BrokerDataAccess>();
       services.AddSingleton<QuoteClient>();
+      services.AddSingleton<CandleClient>();
       services.AddHostedService<BrokerSubscriptionWorker>();
       services.AddHostedService<QuoteSubscriptionWorker>();
       services.AddHostedService<BrokerUpdateWorker>();
