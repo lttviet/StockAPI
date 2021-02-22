@@ -34,7 +34,6 @@ namespace StockBE.DataAccess
         using (var streamTask = client.GetStreamAsync(url))
         {
           var response = await JsonSerializer.DeserializeAsync<CandleAPIResponse>(await streamTask);
-          Console.WriteLine(url);
           return response.ToCandle(symbol);
         }
       }
