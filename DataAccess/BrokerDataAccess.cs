@@ -4,17 +4,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Cloud.Firestore;
+using Microsoft.Extensions.Configuration;
 
 namespace StockBE.DataAccess
 {
   public class BrokerDataAccess
   {
-    private readonly string projectID = "";
-    private readonly string credentialFile = @"";
     private readonly FirestoreDb db;
 
-    public BrokerDataAccess()
+    public BrokerDataAccess(IConfiguration configuration)
     {
+      string credentialFile = configuration["GoogleCredential"];
+      string projectID = configuration["GoogleProjectId"];
+
       Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialFile);
       db = FirestoreDb.Create(projectID);
     }

@@ -20,13 +20,14 @@ namespace StockBE
     {
       services.AddCors(options =>
       {
-        options.AddPolicy(LocalCorsPolicy, builder =>
-        {
-          builder.WithOrigins("http://localhost:4200")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-        });
+        options.AddPolicy(LocalCorsPolicy,
+                          builder =>
+                          {
+                            builder.WithOrigins("http://localhost:4200")
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                          });
       });
 
       services.AddSwaggerGen(c =>
