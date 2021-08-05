@@ -8,19 +8,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace StockBE.DataAccess
 {
   public class QuoteClient
   {
-    private readonly string wsEndpoint = "";
-    private readonly string apiEndPoint = "";
+    private readonly string wsEndpoint;
+    private readonly string apiEndPoint;
     private readonly ClientWebSocket socket;
     private readonly CancellationTokenSource source;
     private readonly ConcurrentDictionary<string, bool> symbols;
 
-    public QuoteClient()
+    public QuoteClient(IConfiguration configuration)
     {
+      string token = configuration["FinnhubToken"];
+      wsEndpoint = $"wss://ws.finnhub.io?token={token}";
+      apiEndPoint = $"https://finnhub.io/api/v1/quote?token={token}";
+
       socket = new ClientWebSocket();
       source = new CancellationTokenSource();
       symbols = new ConcurrentDictionary<string, bool>();

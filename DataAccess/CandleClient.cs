@@ -6,26 +6,30 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace StockBE.DataAccess
 {
   public class CandleClient
   {
-    private readonly string endpoint = "https://finnhub.io/api/v1/stock/candle?token=";
+    private readonly string endpoint;
     private readonly CancellationTokenSource source;
 
-    public CandleClient()
+    public CandleClient(IConfiguration configuration)
     {
+      string token = configuration["FinnhubToken"];
+      endpoint = $"https://finnhub.io/api/v1/stock/candle?token={token}";
+
       source = new CancellationTokenSource();
     }
 
-    // DEMO get last 7 days' data
+    // DEMO get last 30 days' data
     public async Task<Candle> GetDailyChangeCandle(string symbol)
     {
       DateTimeOffset currentDate = DateTimeOffset.Now;
       long to = currentDate.ToUnixTimeSeconds();
 
-      DateTimeOffset previousWeekDate = currentDate.AddDays(-7);
+      DateTimeOffset previousWeekDate = currentDate.AddDays(-30);
       long from = previousWeekDate.ToUnixTimeSeconds();
 
       using (var client = new HttpClient())
